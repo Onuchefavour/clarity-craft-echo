@@ -5,8 +5,9 @@
 (define-constant ERR-UNAUTHORIZED (err u401))
 (define-constant ERR-INVALID-PARAMS (err u400))
 
-;; Data Variables
+;; Data Variables  
 (define-data-var next-tutorial-id uint u0)
+(define-data-var next-category-id uint u0)
 
 ;; Data Maps
 (define-map tutorials
@@ -16,9 +17,24 @@
         title: (string-utf8 100),
         description: (string-utf8 1000),
         materials: (string-utf8 500),
+        category-id: uint,
+        tags: (list 5 (string-utf8 20)),
         likes: uint,
         tips-received: uint
     }
+)
+
+(define-map categories
+    uint
+    {
+        name: (string-utf8 50),
+        description: (string-utf8 200)
+    }
+)
+
+(define-map category-tutorials
+    uint
+    (list 100 uint)
 )
 
 (define-map user-stats
@@ -38,12 +54,28 @@
 
 ;; Public Functions
 
-(define-public (create-tutorial (title (string-utf8 100)) (description (string-utf8 1000)) (materials (string-utf8 500)))
+(define-public (create-category (name (string-utf8 50)) (description (string-utf8 200)))
+    (let
+        ((category-id (var-get next-category-id)))
+        
+        (map-set categories category-id {
+            name: name,
+            description: description
+        })
+        
+        (var-set next-category-id (+ category-id u1))
+        (ok category-id)
+    )
+)
+
+(define-public (create-tutorial (title (string-utf8 100)) (description (string-utf8 1000)) 
+                              (materials (string-utf8 500)) (category-id uint) (tags (list 5 (string-utf8 20))))
     (let
         (
             (tutorial-id (var-get next-tutorial-id))
             (user-stat (default-to {tutorials-created: u0, total-likes-received: u0, total-tips-received: u0, reputation-score: u0} 
                 (map-get? user-stats tx-sender)))
+            (category (unwrap! (map-get? categories category-id) ERR-NOT-FOUND))
         )
         
         ;; Store tutorial
@@ -52,9 +84,18 @@
             title: title,
             description: description,
             materials: materials,
+            category-id: category-id,
+            tags: tags,
             likes: u0,
             tips-received: u0
         })
+        
+        ;; Update category tutorials list
+        (map-set category-tutorials category-id
+            (unwrap! (as-max-len? 
+                (append (default-to (list) (map-get? category-tutorials category-id)) tutorial-id)
+                u100)
+                ERR-INVALID-PARAMS))
         
         ;; Update user stats
         (map-set user-stats tx-sender 
@@ -131,6 +172,28 @@
     (ok (map-get? tutorials tutorial-id))
 )
 
+(define-read-only (get-category (category-id uint))
+    (ok (map-get? categories category-id))
+)
+
+(define-read-only (get-category-tutorials (category-id uint))
+    (ok (map-get? category-tutorials category-id))
+)
+
 (define-read-only (get-user-stats (user principal))
     (ok (map-get? user-stats user))
+)
+
+(define-read-only (search-tutorials-by-tag (search-tag (string-utf8 20)))
+    (let
+        ((tutorial-count (var-get next-tutorial-id)))
+        (filter search-tutorials-by-tag-helper (list tutorial-count))
+    )
+)
+
+(define-private (search-tutorials-by-tag-helper (tutorial-id uint))
+    (let
+        ((tutorial (unwrap! (map-get? tutorials tutorial-id) false)))
+        (index-of? (get tags tutorial) search-tag)
+    )
 )
