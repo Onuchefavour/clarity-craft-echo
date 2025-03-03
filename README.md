@@ -3,6 +3,7 @@
 CraftEcho is a decentralized platform for DIY enthusiasts to share tutorials and craft ideas. The platform allows creators to:
 
 - Post tutorials with descriptions and materials needed
+- Edit and manage their tutorials with version history
 - Organize tutorials into categories
 - Add searchable tags to tutorials
 - Like and collect tutorials
@@ -10,6 +11,12 @@ CraftEcho is a decentralized platform for DIY enthusiasts to share tutorials and
 - Build reputation through community engagement
 
 ## Features
+
+### Tutorial Management
+- Create detailed tutorials with descriptions and materials
+- Edit tutorials with automatic version history tracking
+- Soft delete functionality for tutorial removal
+- Full edit history preservation
 
 ### Categories
 - Tutorials are organized into categories for easy browsing
@@ -22,7 +29,7 @@ CraftEcho is a decentralized platform for DIY enthusiasts to share tutorials and
 - Improved discovery of tutorials
 
 ### Core Features
-- Tutorial creation with rich descriptions
+- Tutorial creation and management
 - Like and tipping system
 - Reputation tracking
 - STX-based creator rewards
